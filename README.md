@@ -12,7 +12,7 @@ On the result screen you can also have the answer **read aloud**, get a **phone 
 
 A live **"This week in New York"** panel shows which scams are hitting the city, built from every check (anonymously).
 
-**See how it works:** open `/about` on the running app, or the [explainer page](https://anujchoudhury.github.io/plainly/) (published from `docs/` with GitHub Pages).
+**See how it works:** open `/about` on the running app, or the [explainer page](https://anujchoudhury.github.io/Plainly/) (published from `docs/` with GitHub Pages).
 
 ## Run it (2 minutes)
 
