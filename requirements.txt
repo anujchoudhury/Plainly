@@ -1,0 +1,9 @@
+# Pure-Python or prebuilt-wheel packages only, so nothing needs a C compiler (Windows-safe).
+# asyncpg (Tiger Data) is installed separately by run.bat / run.sh and is optional.
+fastapi>=0.110
+uvicorn>=0.29
+python-multipart>=0.0.9
+httpx>=0.27
+google-genai>=2.0
+sentry-sdk>=2.40
+python-dotenv>=1.0

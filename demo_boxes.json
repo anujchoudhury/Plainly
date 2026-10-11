@@ -1,0 +1,140 @@
+{
+ "toll": [
+  {
+   "id": "r1",
+   "kind": "flag",
+   "label": "Random personal number",
+   "text": "+1 (639) 412-0587",
+   "box_2d": [
+    153,
+    350,
+    190,
+    650
+   ]
+  },
+  {
+   "id": "r2",
+   "kind": "fact",
+   "label": "Amount: $6.99",
+   "text": "$6.99",
+   "box_2d": [
+    357,
+    280,
+    392,
+    398
+   ]
+  },
+  {
+   "id": "r3",
+   "kind": "flag",
+   "label": "Threats and a 2-day deadline",
+   "text": "To avoid a $50.00 late fee and suspension of your driving privileges, pay by 10/13",
+   "box_2d": [
+    357,
+    73,
+    468,
+    738
+   ]
+  },
+  {
+   "id": "r4",
+   "kind": "flag",
+   "label": "Look-alike link",
+   "text": "https://ezpassny-tolls.top/pay",
+   "box_2d": [
+    459,
+    73,
+    503,
+    651
+   ]
+  },
+  {
+   "id": "r5",
+   "kind": "flag",
+   "label": "'Reply Y' trick",
+   "text": "Please reply Y, then exit the text message and open it again to activate the link.",
+   "box_2d": [
+    530,
+    73,
+    642,
+    678
+   ]
+  }
+ ],
+ "coned": [
+  {
+   "id": "r1",
+   "kind": "fact",
+   "label": "$84.21 due Nov 2",
+   "text": "Amount: $84.21, due 11/02",
+   "box_2d": [
+    353,
+    73,
+    395,
+    555
+   ]
+  },
+  {
+   "id": "r2",
+   "kind": "fact",
+   "label": "Official site, no link to tap",
+   "text": "coned.com",
+   "box_2d": [
+    428,
+    73,
+    468,
+    307
+   ]
+  }
+ ],
+ "bill": [
+  {
+   "id": "r1",
+   "kind": "fact",
+   "label": "Amount due: $3,097.50",
+   "text": "$3,097.50",
+   "box_2d": [
+    180,
+    613,
+    221,
+    830
+   ]
+  },
+  {
+   "id": "r2",
+   "kind": "fact",
+   "label": "Due Oct 30",
+   "text": "Due by October 30, 2026",
+   "box_2d": [
+    216,
+    613,
+    245,
+    901
+   ]
+  },
+  {
+   "id": "r3",
+   "kind": "flag",
+   "label": "Out-of-network ER doctor billed in full",
+   "text": "Emergency physician services, Coastline ER Physicians (out-of-network), Insurance paid $0.00",
+   "box_2d": [
+    378,
+    198,
+    460,
+    929
+   ]
+  },
+  {
+   "id": "r4",
+   "kind": "fact",
+   "label": "Collections warning",
+   "text": "may be referred to an outside collection agency",
+   "box_2d": [
+    697,
+    58,
+    752,
+    760
+   ]
+  }
+ ]
+}

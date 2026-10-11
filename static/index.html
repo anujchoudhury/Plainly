@@ -1,0 +1,1109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Plainly</title>
+<meta name="description" content="Snap a text, letter or bill. Find out if it's real, what it says, and what to do.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Plainly">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D1630" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+<link rel="icon" href="/static/icon-192.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #EEF1F6;
+  --surface: #FFFFFF;
+  --ink: #14213D;
+  --ink-2: #4A5672;
+  --ink-3: #7A849C;
+  --line: #D5DBE7;
+  --tint: rgba(20, 33, 61, .07);
+  --scam: #C21F4E;
+  --careful: #D99A1E;
+  --careful-ink: #8A5A00;
+  --real: #2E8B62;
+  --unsure: #5B6B8C;
+  --hl: rgba(255, 214, 51, .5);
+  --focus: #2F6BFF;
+  --radius-lg: 22px;
+  --radius-md: 14px;
+  --radius-sm: 9px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0D1630; --surface: #16213F; --ink: #EEF1F6; --ink-2: #B3BCD3; --ink-3: #8390AE;
+    --line: #2A3760; --tint: rgba(238, 241, 246, .06);
+    --scam: #E0457B; --careful: #B98226; --careful-ink: #E8B65A; --real: #2F9E6C; --unsure: #8D9BBE;
+    --hl: rgba(255, 214, 51, .38); --focus: #7FA3FF; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0D1630; --surface: #16213F; --ink: #EEF1F6; --ink-2: #B3BCD3; --ink-3: #8390AE;
+  --line: #2A3760; --tint: rgba(238, 241, 246, .06);
+  --scam: #E0457B; --careful: #B98226; --careful-ink: #E8B65A; --real: #2F9E6C; --unsure: #8D9BBE;
+  --hl: rgba(255, 214, 51, .38); --focus: #7FA3FF; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font: 400 17px/1.5 "Public Sans", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent;
+}
+button, input, textarea { font: inherit; color: inherit; }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+[hidden] { display: none !important; }
+
+.app {
+  max-width: 560px; margin: 0 auto;
+  padding: calc(env(safe-area-inset-top) + 14px) 16px calc(env(safe-area-inset-bottom) + 28px);
+}
+.top { display: flex; align-items: center; justify-content: space-between; height: 44px; margin-bottom: 18px; }
+.brand { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 20px; letter-spacing: -.02em; text-decoration: none; }
+.brand img { width: 30px; height: 30px; border-radius: 8px; }
+.mode { font-size: 13px; font-weight: 600; color: var(--ink-2); display: flex; align-items: center; gap: 6px; }
+.mode::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); }
+.mode.live::before { background: var(--real); }
+.mode.demo::before { background: var(--careful); }
+
+/* ---------- home */
+.ask { margin: 6px 0 14px; font-weight: 800; font-size: clamp(34px, 10vw, 46px); line-height: 1.02; letter-spacing: -.035em; }
+.ask span { display: block; }
+.ask span:nth-child(2) { color: var(--ink-2); }
+.ask span:nth-child(3) { color: var(--ink-3); }
+.lede { margin: 0 0 22px; color: var(--ink-2); max-width: 34em; }
+
+.envelope {
+  position: relative; border-radius: var(--radius-lg); padding: 58px 12px 14px;
+  background-color: var(--surface);
+  background-image:
+    repeating-linear-gradient(45deg, var(--tint) 0 1.5px, transparent 1.5px 7px),
+    repeating-linear-gradient(-45deg, var(--tint) 0 1.5px, transparent 1.5px 7px);
+  border: 1px solid var(--line);
+}
+.envelope::before { /* the flap */
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 46px;
+  background: linear-gradient(to bottom right, transparent 49.4%, var(--line) 49.6%, var(--line) 50.4%, transparent 50.6%) left / 50% 100% no-repeat,
+              linear-gradient(to bottom left, transparent 49.4%, var(--line) 49.6%, var(--line) 50.4%, transparent 50.6%) right / 50% 100% no-repeat;
+  pointer-events: none;
+}
+.window {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md);
+  padding: 14px; display: grid; gap: 10px; box-shadow: inset 0 1px 0 rgba(255,255,255,.4);
+}
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 52px; padding: 0 18px; border-radius: var(--radius-sm); cursor: pointer;
+  border: 1.5px solid var(--line); background: var(--surface); font-weight: 600; text-decoration: none;
+}
+.btn svg { width: 22px; height: 22px; flex: none; }
+.btn.wide-text { font-size: 16px; white-space: nowrap; padding: 0 12px; }
+.btn.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); font-size: 18px; min-height: 60px; }
+.btn.small { min-height: 40px; padding: 0 14px; font-size: 15px; }
+.btn:active { transform: translateY(1px); }
+.linkbtn { background: none; border: 0; padding: 8px; font-weight: 600; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+textarea {
+  width: 100%; min-height: 150px; resize: vertical; border: 1.5px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--paper); padding: 12px; line-height: 1.45; font-size: 16px;
+}
+.paste { display: grid; gap: 10px; }
+
+.samples { margin: 20px 0 8px; }
+.samples p { margin: 0 0 8px; font-size: 15px; color: var(--ink-2); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  border: 1.5px solid var(--line); background: var(--surface); border-radius: 999px; padding: 9px 15px;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+}
+
+/* ---------- trends */
+.trends { margin-top: 34px; padding-top: 22px; border-top: 1px solid var(--line); }
+.trends h2, .q h2 { margin: 0 0 4px; font-size: 21px; font-weight: 800; letter-spacing: -.015em; }
+.trends .sub { margin: 0 0 14px; color: var(--ink-2); font-size: 15px; }
+.trends .sub b { color: var(--ink); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 0 0 12px; font-size: 13px; color: var(--ink-2); padding: 0; list-style: none; }
+.legend li { display: flex; align-items: center; gap: 6px; }
+.sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.sw.scam, .seg.scam { background: var(--scam); }
+.sw.suspicious, .seg.suspicious { background: var(--careful); }
+.sw.legit, .seg.legit { background: var(--real); }
+.seg.unclear { background: var(--ink-3); }
+.rows { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.row { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: baseline; font-size: 15px; }
+.row .name { font-weight: 600; }
+.row .count { color: var(--ink-2); font-size: 13px; font-variant-numeric: tabular-nums; }
+.bar { grid-column: 1 / -1; height: 10px; display: flex; gap: 2px; }
+.seg { height: 100%; min-width: 3px; }
+.seg:first-child { border-top-left-radius: 4px; border-bottom-left-radius: 4px; }
+.seg:last-child { border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
+.note { margin: 14px 0 0; font-size: 13px; color: var(--ink-3); }
+
+/* ---------- result */
+.back { display: inline-flex; align-items: center; gap: 4px; background: none; border: 0; padding: 6px 0; margin-bottom: 10px; font-weight: 700; color: var(--ink-2); cursor: pointer; }
+.docwrap { text-align: center; }
+.doc { position: relative; display: inline-block; max-width: 100%; border-radius: var(--radius-md); background: var(--surface); border: 1px solid var(--line); padding: 6px; }
+.doc img { display: block; max-width: 100%; max-height: 64vh; border-radius: 9px; }
+.marks { position: absolute; inset: 6px; pointer-events: none; }
+.mark { position: absolute; border-radius: 8px; transition: opacity .3s, box-shadow .3s; }
+.mark.fact { background: var(--hl); mix-blend-mode: multiply; }
+.mark.flag { border: 2.5px solid var(--scam); }
+.v-legit .mark.flag, .v-unclear .mark.flag { border-color: var(--careful); }
+.mark.flag.dim { opacity: .35; }
+.mark .n {
+  position: absolute; left: -11px; top: -11px; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--scam); color: #fff; font: 800 12px/22px "Public Sans", sans-serif; text-align: center;
+}
+.v-legit .mark .n, .v-unclear .mark .n { background: var(--careful); }
+.mark.pulse { box-shadow: 0 0 0 6px color-mix(in srgb, var(--scam) 30%, transparent); }
+.scan { position: absolute; inset: 6px; overflow: hidden; border-radius: 9px; pointer-events: none; }
+.scan::after {
+  content: ""; position: absolute; left: 0; right: 0; height: 70px; top: -70px;
+  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--focus) 22%, transparent), transparent);
+  animation: sweep 1.6s ease-in-out infinite;
+}
+@keyframes sweep { to { top: 100%; } }
+.pdfcard, .quote {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 16px;
+  text-align: left; white-space: pre-wrap; font-size: 15px; color: var(--ink-2); max-height: 260px; overflow: auto; margin: 0;
+}
+.stamp {
+  position: absolute; top: 5%; right: 4%; padding: 4px 14px; border-radius: 10px;
+  border: 4px solid currentColor; outline: 2px solid currentColor; outline-offset: 3px;
+  font: 900 clamp(26px, 8vw, 40px)/1.1 "Public Sans", sans-serif; text-transform: uppercase; letter-spacing: .03em;
+  background: rgba(255, 255, 255, .72);
+  transform: rotate(-10deg); pointer-events: none; white-space: nowrap;
+}
+.stamp.scam { color: var(--scam); }
+.stamp.suspicious { color: var(--careful-ink); }
+.stamp.legit { color: var(--real); }
+.stamp.unclear { color: var(--unsure); }
+.stamp.long { font-size: clamp(20px, 5.6vw, 30px); border-width: 3px; }
+.stamp.thump { animation: thump .55s cubic-bezier(.2, .9, .3, 1.2) both; }
+@keyframes thump {
+  0% { opacity: 0; transform: rotate(-10deg) scale(2.4); }
+  55% { opacity: 1; transform: rotate(-10deg) scale(.92); }
+  100% { opacity: 1; transform: rotate(-10deg) scale(1); }
+}
+.doc.hit { animation: hit .35s .3s ease-out; }
+@keyframes hit { 30% { transform: translateY(3px); } }
+.stamp.inline { position: static; display: inline-block; margin: 6px 0 10px; font-size: 26px; background: transparent; }
+
+.progress { list-style: none; padding: 0; margin: 22px 0 0; display: grid; gap: 14px; }
+.progress li { display: grid; grid-template-columns: 26px 1fr; gap: 12px; align-items: start; color: var(--ink-3); }
+.progress li b { display: block; font-weight: 700; }
+.progress li small { display: block; font-size: 14px; color: var(--ink-2); }
+.progress .dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); margin-top: 2px; position: relative; }
+.progress li.active { color: var(--ink); }
+.progress li.active .dot { border-color: var(--ink); border-top-color: transparent; animation: spin .8s linear infinite; }
+.progress li.done { color: var(--ink); }
+.progress li.done .dot { background: var(--ink); border-color: var(--ink); }
+.progress li.done .dot::after { content: ""; position: absolute; left: 6px; top: 3px; width: 5px; height: 9px; border: solid var(--paper); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+@keyframes spin { to { transform: rotate(360deg); } }
+.favs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.fav { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 4px 10px 4px 6px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--ink-2); }
+.fav img { width: 16px; height: 16px; border-radius: 4px; }
+
+.answer { margin-top: 18px; }
+.q { padding: 22px 0; border-top: 1px solid var(--line); }
+.q:first-child { border-top: 0; padding-top: 6px; }
+.q h2 { color: var(--ink-2); font-size: 15px; font-weight: 700; letter-spacing: 0; margin-bottom: 8px; }
+.headline { margin: 0 0 6px; font-size: 27px; line-height: 1.15; font-weight: 800; letter-spacing: -.025em; }
+.sure { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--ink-2); margin-bottom: 14px; }
+.sure .meter { flex: 0 0 110px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.sure .meter i { display: block; height: 100%; background: var(--ink); border-radius: 3px; }
+.listlabel { margin: 14px 0 6px; font-size: 15px; font-weight: 700; }
+.flags, .goods, .steps, .rights, .sources { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.flags li {
+  display: grid; grid-template-columns: 26px 1fr; gap: 10px; padding: 12px; border-radius: var(--radius-sm);
+  background: var(--surface); border: 1px solid var(--line); cursor: pointer; text-align: left;
+}
+.flags .num { width: 24px; height: 24px; border-radius: 50%; background: var(--scam); color: #fff; font-weight: 800; font-size: 13px; display: grid; place-items: center; }
+.v-legit .flags .num, .v-unclear .flags .num { background: var(--careful); }
+.flags .num.none { background: var(--ink-3); }
+.flags b, .goods b, .steps b, .rights b { display: block; font-weight: 700; line-height: 1.3; }
+.flags p, .goods p, .steps p, .rights p { margin: 2px 0 0; font-size: 15px; color: var(--ink-2); line-height: 1.45; }
+.goods li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; padding: 4px 0; }
+.goods svg { width: 22px; height: 22px; color: var(--real); margin-top: 1px; }
+.plain { margin: 0 0 14px; font-size: 18px; line-height: 1.55; }
+.facts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin: 0; border-radius: var(--radius-md); overflow: hidden; background: var(--line); border: 1px solid var(--line); }
+.facts div { background: var(--surface); padding: 12px 14px; }
+.facts div.wide { grid-column: 1 / -1; }
+.facts dt { font-size: 13px; color: var(--ink-2); }
+.facts dd { margin: 2px 0 0; font-weight: 700; font-size: 17px; line-height: 1.3; overflow-wrap: anywhere; }
+.facts dd.big { font-size: 24px; letter-spacing: -.02em; }
+.facts .cal { display: inline-block; margin-top: 6px; font-size: 14px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; color: var(--ink-2); }
+.steps { counter-reset: s; }
+.steps li { display: grid; grid-template-columns: 30px 1fr; gap: 10px; padding: 10px 0; cursor: pointer; }
+.steps li::before {
+  counter-increment: s; content: counter(s); width: 28px; height: 28px; border-radius: 50%;
+  border: 2px solid var(--ink); display: grid; place-items: center; font-weight: 800; font-size: 14px;
+}
+.steps li.done::before { content: "✓"; background: var(--ink); color: var(--paper); }
+.steps li.done b { text-decoration: line-through; color: var(--ink-3); }
+.msg { margin-top: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 16px; }
+.msg h3 { margin: 0 0 8px; font-size: 17px; font-weight: 800; }
+.msg .to { font-size: 14px; color: var(--ink-2); margin: 0 0 8px; overflow-wrap: anywhere; }
+.msg textarea { min-height: 220px; background: var(--paper); font-size: 15px; }
+.msg .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.rights li, .sources li { padding: 4px 0; }
+.rights a, .sources a { font-size: 14px; color: var(--ink-2); text-underline-offset: 3px; }
+.sources li { display: grid; grid-template-columns: 20px 1fr; gap: 10px; align-items: start; }
+.sources img { width: 18px; height: 18px; border-radius: 4px; margin-top: 3px; }
+.sources a { color: var(--ink); font-size: 15px; font-weight: 600; text-decoration: none; display: block; line-height: 1.35; }
+.sources small { display: block; color: var(--ink-3); font-size: 13px; }
+.meta { margin: 18px 0 0; font-size: 13px; color: var(--ink-3); }
+.error { margin-top: 20px; padding: 16px; border-radius: var(--radius-md); background: var(--surface); border: 1.5px solid var(--scam); }
+.error p { margin: 0 0 12px; font-weight: 600; }
+
+footer { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-3); line-height: 1.5; }
+footer p { margin: 0 0 10px; }
+.stack { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+.stack li { display: flex; gap: 8px; align-items: baseline; }
+.stack li::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--ink-3); transform: translateY(-1px); }
+.stack li.on::before { background: var(--real); border-color: var(--real); }
+
+.toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 20px); transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 999px; font-size: 14px; font-weight: 600; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.show { opacity: 1; }
+
+
+/* ---------- read aloud, send to family, phone script */
+.actbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+.actbar .btn { min-height: 44px; gap: 8px; }
+.actbar .btn svg { width: 19px; height: 19px; }
+.btn[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.reading { background: var(--hl); border-radius: 6px; box-shadow: 0 0 0 4px var(--hl); }
+.steps li.reading { background: none; box-shadow: none; }
+.steps li.reading b { background: var(--hl); border-radius: 4px; box-shadow: 0 0 0 3px var(--hl); }
+
+.call { margin-top: 16px; border: 1.5px solid var(--ink); border-radius: var(--radius-md); padding: 16px; background: var(--surface); }
+.call h3 { margin: 0; font-size: 17px; font-weight: 800; }
+.call .who { margin: 2px 0 12px; font-size: 15px; color: var(--ink-2); }
+.call .dial { width: 100%; margin-bottom: 4px; font-size: 18px; min-height: 56px; }
+.call .dial svg { width: 22px; height: 22px; }
+.ready { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.ready li { font-size: 14px; padding: 5px 11px; border-radius: 999px; background: var(--paper); border: 1px solid var(--line); }
+.script { list-style: none; margin: 0; padding: 0; counter-reset: line; display: grid; gap: 10px; }
+.script li { counter-increment: line; display: grid; grid-template-columns: 22px 1fr; gap: 8px; font-size: 16px; line-height: 1.45; }
+.script li::before { content: counter(line); font-size: 13px; font-weight: 700; color: var(--ink-3); padding-top: 2px; text-align: right; }
+.script li span { padding-left: 12px; border-left: 3px solid var(--line); }
+.script li.reading { background: none; box-shadow: none; }
+.script li.reading span { background: var(--hl); border-left-color: var(--ink); }
+.call .push { margin: 12px 0 10px; font-size: 15px; color: var(--ink-2); }
+.call .push b { color: var(--ink); }
+
+.sheet { width: min(480px, calc(100% - 32px)); max-height: calc(100dvh - 32px); border: 1px solid var(--line); border-radius: var(--radius-lg);
+  background: var(--surface); color: var(--ink); padding: 18px; overflow: auto; }
+.sheet::backdrop { background: rgba(13, 22, 48, .55); }
+.sheethead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sheethead h3 { margin: 0; font-size: 20px; font-weight: 800; }
+.sheet .x { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--paper); font-size: 22px; line-height: 1; cursor: pointer; }
+.sheet .sub { margin: 4px 0 12px; font-size: 15px; color: var(--ink-2); }
+.sheet img { display: block; width: 100%; border-radius: 14px; border: 1px solid var(--line); background: var(--paper); min-height: 120px; }
+.sheet textarea { min-height: 120px; margin-top: 12px; font-size: 15px; }
+.sheet .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.sheet .actions .primary { flex: 1 1 100%; min-height: 54px; font-size: 17px; }
+
+@media (min-width: 960px) {
+  .app { max-width: 1120px; padding-left: 40px; padding-right: 40px; }
+  #home:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 0 64px; align-items: start; }
+  #home .trends { margin-top: 8px; padding-top: 0; border-top: 0; grid-column: 2; grid-row: 1 / span 4; }
+  #home > :not(.trends) { grid-column: 1; }
+  #result:not([hidden]) { display: grid; grid-template-columns: 460px minmax(0, 1fr); gap: 0 56px; align-items: start; }
+  #result .back { grid-column: 1 / -1; justify-self: start; }
+  #result .left { position: sticky; top: 20px; }
+  #result .right { grid-column: 2; }
+  .doc img { max-height: 78vh; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .scan::after { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <a class="brand" href="/" id="homeLink"><img src="/static/icon-192.png" alt="">Plainly</a>
+    <span class="mode" id="mode"></span>
+  </header>
+
+  <main id="home">
+    <h1 class="ask"><span>Is it real?</span><span>What does it say?</span><span>What do I do?</span></h1>
+    <p class="lede">Snap a text, letter or bill. Plainly tells you if it's a scam, explains it in plain English, and gives you the next steps, with a message ready to send.</p>
+
+    <section class="envelope" aria-label="Add something to check">
+      <div class="window">
+        <button class="btn primary" id="camBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>
+          Take a photo
+        </button>
+        <button class="btn wide-text" id="upBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+          Upload a screenshot or PDF
+        </button>
+        <button class="linkbtn" id="pasteBtn" type="button" aria-expanded="false">Paste the text instead</button>
+        <div class="paste" id="pasteBox" hidden>
+          <label for="pasteText" class="sr" hidden>Message or letter text</label>
+          <textarea id="pasteText" placeholder="Paste the message, email or letter here"></textarea>
+          <button class="btn primary" id="pasteGo" type="button">Check this text</button>
+        </div>
+      </div>
+      <input type="file" id="camInput" accept="image/*" capture="environment" hidden>
+      <input type="file" id="upInput" accept="image/*,application/pdf" hidden>
+    </section>
+
+    <div class="samples">
+      <p>No letter handy? Try one of these:</p>
+      <div class="chips">
+        <button class="chip" data-sample="toll" type="button">A toll text</button>
+        <button class="chip" data-sample="bill" type="button">A hospital bill</button>
+        <button class="chip" data-sample="coned" type="button">A Con Edison text</button>
+      </div>
+    </div>
+
+    <section class="trends" id="trends" aria-live="polite">
+      <h2 id="trendsTitle">This week in New York</h2>
+      <p class="sub" id="trendsSub">Loading this week's checks…</p>
+      <ul class="legend" aria-label="Legend">
+        <li><span class="sw scam"></span>Scam</li>
+        <li><span class="sw suspicious"></span>Suspicious</li>
+        <li><span class="sw legit"></span>Looks real</li>
+      </ul>
+      <ul class="rows" id="trendRows"></ul>
+      <p class="note" id="trendNote"></p>
+    </section>
+  </main>
+
+  <main id="result" hidden>
+    <button class="back" id="backBtn" type="button">‹ Check something else</button>
+    <div class="left">
+      <div class="docwrap" id="docwrap">
+        <div class="doc" id="doc">
+          <img id="docImg" alt="The document you're checking">
+          <div class="marks" id="marks"></div>
+          <div class="scan" id="scan"></div>
+          <div class="stamp" id="stamp" hidden></div>
+        </div>
+      </div>
+      <pre class="quote" id="docText" hidden></pre>
+      <div class="pdfcard" id="pdfCard" hidden></div>
+      <ol class="progress" id="progress">
+        <li data-stage="read"><span class="dot"></span><div><b>Reading it</b><small id="pRead"></small></div></li>
+        <li data-stage="verify"><span class="dot"></span><div><b>Checking the web</b><small id="pVerify"></small><div class="favs" id="favs"></div></div></li>
+        <li data-stage="decide"><span class="dot"></span><div><b>Writing your plan</b><small id="pDecide"></small></div></li>
+      </ol>
+    </div>
+
+    <div class="right">
+      <div class="error" id="err" hidden><p id="errText"></p><button class="btn small" id="retryBtn" type="button">Check something else</button></div>
+      <div class="answer" id="answer" hidden>
+        <section class="q">
+          <h2>Is it real?</h2>
+          <div class="stamp inline" id="stampInline" hidden></div>
+          <p class="headline" id="headline"></p>
+          <div class="sure" id="sure"></div>
+          <div class="actbar">
+            <button class="btn small" id="readBtn" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg><span>Read it to me</span></button>
+            <button class="btn small" id="familyBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><circle cx="17.5" cy="9.5" r="2.4"/><path d="M15.8 14.3A4.5 4.5 0 0 1 21 18.5"/></svg><span>Send to family</span></button>
+          </div>
+          <p class="listlabel" id="flagsLabel" hidden></p>
+          <ol class="flags" id="flags"></ol>
+          <p class="listlabel" id="goodsLabel" hidden>Good signs</p>
+          <ul class="goods" id="goods"></ul>
+        </section>
+        <section class="q">
+          <h2>What does it say?</h2>
+          <p class="plain" id="plain"></p>
+          <dl class="facts" id="facts"></dl>
+        </section>
+        <section class="q">
+          <h2>What do I do?</h2>
+          <ol class="steps" id="steps"></ol>
+          <div class="call" id="call" hidden>
+            <h3>If you call</h3>
+            <p class="who" id="callWho"></p>
+            <a class="btn primary dial" id="callDial" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg><span></span></a>
+            <p class="listlabel" id="callReadyLabel">Have these ready</p>
+            <ul class="ready" id="callReady"></ul>
+            <p class="listlabel">What to say</p>
+            <ol class="script" id="callLines"></ol>
+            <p class="push" id="callPush"></p>
+            <button class="btn small" id="callRead" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg><span>Practice it out loud</span></button>
+          </div>
+          <div class="msg" id="msg" hidden>
+            <h3 id="msgTitle"></h3>
+            <p class="to" id="msgTo"></p>
+            <textarea id="msgBody" aria-label="Message you can edit before sending"></textarea>
+            <div class="actions" id="msgActions"></div>
+          </div>
+        </section>
+        <section class="q" id="rightsSec" hidden>
+          <h2>Your rights</h2>
+          <ul class="rights" id="rights"></ul>
+        </section>
+        <section class="q" id="sourcesSec" hidden>
+          <h2>Sources we checked</h2>
+          <ul class="sources" id="sources"></ul>
+        </section>
+        <p class="meta" id="meta"></p>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>Plainly isn't a lawyer or your bank. When money or your health is on the line, confirm with the organization using a number or website you look up yourself. Your photo is sent for analysis and not stored; only an anonymous category and verdict are kept for the weekly trends.</p>
+    <p><a href="/about">How Plainly works</a></p>
+    <ul class="stack" id="stack">
+      <li data-k="gemini">Gemini reads the document and writes your plan</li>
+      <li data-k="nimble">Nimble checks the live web for official sites, scam reports and the rules</li>
+      <li data-k="tiger">Tiger Data keeps the weekly trends</li>
+      <li data-k="sentry">Sentry traces every step</li>
+    </ul>
+  </footer>
+</div>
+<dialog class="sheet" id="famSheet" aria-labelledby="famTitle">
+  <div class="sheethead"><h3 id="famTitle">Send to family</h3><button class="x" id="famClose" type="button" aria-label="Close">×</button></div>
+  <p class="sub">A picture of this check and a short note. Add a line of your own, then send it by text or WhatsApp.</p>
+  <img id="famImg" alt="Preview of the picture you're sending">
+  <textarea id="famText" aria-label="Note that goes with the picture"></textarea>
+  <div class="actions">
+    <button class="btn primary" id="famSend" type="button">Send</button>
+    <a class="btn small" id="famSave" download="plainly-check.png">Save picture</a>
+    <button class="btn small" id="famCopy" type="button">Copy note</button>
+  </div>
+</dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+// lets the app work through free tunnels (Pinggy shows a one-time interstitial page otherwise)
+const H = { "X-Pinggy-No-Screen": "1", "ngrok-skip-browser-warning": "1" };
+const CAT = { toll: "Toll texts", package_delivery: "Package delivery", bank_or_card: "Bank and card", government_or_tax: "Taxes and government",
+  medical_bill: "Medical bills", insurance: "Insurance", housing: "Housing", utility: "Utilities", job_offer: "Job offers",
+  debt_collection: "Debt collection", prize_or_giveaway: "Prizes and giveaways", tech_support: "Tech support", other: "Other" };
+const STAMP = { scam: "Scam", suspicious: "Careful", legit: "Looks real", unclear: "Not sure" };
+const PURPOSE = { official: "Official site", scam_check: "Scam reports", rules: "The rules" };
+let st = {};
+
+function el(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") e.className = v; else if (k === "text") e.textContent = v; else e.setAttribute(k, v);
+  }
+  for (const k of kids) if (k != null) e.append(k);
+  return e;
+}
+function host(u) { try { return new URL(u.includes("://") ? u : "https://" + u).hostname.replace(/^www\./, ""); } catch { return u; } }
+function favicon(u) { return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host(u))}&sz=64`; }
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 1600); }
+function fmtDate(d) { try { return new Date(d + "T12:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" }); } catch { return d; } }
+function daysUntil(d) { const ms = new Date(d + "T23:59:59") - new Date(); return Math.ceil(ms / 86400000); }
+
+/* ---------- config + trends */
+async function loadConfig() {
+  try {
+    const c = await (await fetch("/api/config", { headers: H })).json();
+    st.config = c;
+    const m = $("#mode");
+    m.textContent = c.live ? "Live" : (c.gemini && c.gemini_ok === false ? "Demo mode: Gemini key failed" : "Demo mode");
+    if (c.gemini_detail) m.title = "Gemini key " + c.gemini_detail;
+    m.className = "mode " + (c.live ? "live" : "demo");
+    document.querySelectorAll("#stack li").forEach((li) => li.classList.toggle("on", !!c[li.dataset.k]));
+    $("#trendsTitle").textContent = `This week in ${c.city || "New York"}`;
+  } catch {}
+}
+async function loadTrends() {
+  try {
+    const t = await (await fetch("/api/trends", { headers: H })).json();
+    if (t.error) throw new Error(t.error);
+    const flagged = t.scam + t.suspicious;
+    const sub = $("#trendsSub");
+    sub.replaceChildren(el("b", { text: t.total.toLocaleString() }), ` checks, `, el("b", { text: flagged.toLocaleString() }), ` flagged as scams or suspicious.`);
+    const rows = $("#trendRows"); rows.replaceChildren();
+    const cats = t.by_category.slice(0, 6);
+    const max = Math.max(1, ...cats.map((c) => c.total));
+    for (const c of cats) {
+      const bar = el("div", { class: "bar", role: "img", "aria-label": `${CAT[c.category] || c.category}: ${c.scam} scam, ${c.suspicious} suspicious, ${c.legit} looked real` });
+      bar.style.width = Math.max(8, (c.total / max) * 100) + "%";
+      for (const v of ["scam", "suspicious", "legit", "unclear"]) {
+        if (!c[v]) continue;
+        const s = el("span", { class: "seg " + v, title: `${c[v]} ${v === "legit" ? "looked real" : v}` });
+        s.style.flex = c[v];
+        bar.append(s);
+      }
+      const f = c.scam + c.suspicious;
+      rows.append(el("li", { class: "row" }, el("span", { class: "name", text: CAT[c.category] || c.category }),
+        el("span", { class: "count", text: `${f} of ${c.total} flagged` }), bar));
+    }
+    const notes = [];
+    if (t.seed_count) notes.push(`Includes ${t.seed_count} sample checks so you can see how this fills up.`);
+    if (t.top_domains && t.top_domains.length) notes.push(`Most-flagged links: ${t.top_domains.map((d) => d.domain).join(", ")}.`);
+    $("#trendNote").textContent = notes.join(" ");
+  } catch (e) {
+    $("#trendsSub").textContent = "Trends will show up after the first few checks.";
+  }
+}
+
+/* ---------- input */
+$("#camBtn").onclick = () => $("#camInput").click();
+$("#upBtn").onclick = () => $("#upInput").click();
+$("#camInput").onchange = (e) => e.target.files[0] && start({ file: e.target.files[0] });
+$("#upInput").onchange = (e) => e.target.files[0] && start({ file: e.target.files[0] });
+$("#pasteBtn").onclick = () => {
+  const box = $("#pasteBox"); box.hidden = !box.hidden;
+  $("#pasteBtn").setAttribute("aria-expanded", String(!box.hidden));
+  if (!box.hidden) $("#pasteText").focus();
+};
+$("#pasteGo").onclick = () => { const t = $("#pasteText").value.trim(); if (t) start({ text: t }); else $("#pasteText").focus(); };
+document.querySelectorAll("[data-sample]").forEach((b) => b.onclick = async () => {
+  const name = b.dataset.sample;
+  const blob = await (await fetch(`/static/samples/${name}.png`, { headers: H })).blob();
+  start({ file: new File([blob], `sample-${name}.png`, { type: "image/png" }), sample: true });
+});
+$("#backBtn").onclick = $("#retryBtn").onclick = () => showHome();
+$("#homeLink").onclick = (e) => { e.preventDefault(); showHome(); };
+window.addEventListener("popstate", () => { if (!$("#result").hidden) showHome(true); });
+
+function showHome(fromPop) {
+  stopSpeaking();
+  if (st.abort) st.abort.abort();
+  $("#result").hidden = true; $("#home").hidden = false;
+  $("#camInput").value = ""; $("#upInput").value = "";
+  if (!fromPop && history.state && history.state.r) history.back();
+  window.scrollTo(0, 0);
+  loadTrends();
+}
+
+async function prepareImage(file) {
+  if (!file.type.startsWith("image/") || file.name.startsWith("sample-")) return file;
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+    const scale = Math.min(1, 1800 / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement("canvas");
+    c.width = Math.round(img.naturalWidth * scale); c.height = Math.round(img.naturalHeight * scale);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    const blob = await new Promise((res) => c.toBlob(res, "image/jpeg", 0.86));
+    return blob ? new File([blob], "photo.jpg", { type: "image/jpeg" }) : file;
+  } catch { return file; } finally { URL.revokeObjectURL(url); }
+}
+
+/* ---------- run */
+async function start({ file, text }) {
+  stopSpeaking();
+  st = { config: st.config, sources: [], t0: performance.now() };
+  $("#home").hidden = true; $("#result").hidden = false;
+  history.pushState({ r: 1 }, "");
+  window.scrollTo(0, 0);
+  resetResult();
+  const fd = new FormData();
+  if (file) {
+    const f = await prepareImage(file);
+    if (f.type === "application/pdf") {
+      $("#docwrap").hidden = true; $("#pdfCard").hidden = false; $("#pdfCard").textContent = `PDF: ${f.name}`;
+    } else {
+      $("#docImg").src = URL.createObjectURL(f); $("#docwrap").hidden = false;
+    }
+    fd.append("file", f, f.name);
+  } else {
+    $("#docwrap").hidden = true; $("#docText").hidden = false; $("#docText").textContent = text;
+  }
+  if (text) fd.append("text", text);
+  setStage("read", "start");
+  st.abort = new AbortController();
+  try {
+    const res = await fetch("/api/analyze", { method: "POST", body: fd, headers: H, signal: st.abort.signal });
+    if (!res.ok || !res.body) throw new Error(`Server returned ${res.status}`);
+    const reader = res.body.getReader(), dec = new TextDecoder();
+    let buf = "";
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let i;
+      while ((i = buf.indexOf("\n\n")) >= 0) {
+        const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
+        const line = chunk.split("\n").find((l) => l.startsWith("data: "));
+        if (line) handle(JSON.parse(line.slice(6)));
+      }
+    }
+  } catch (e) {
+    if (e.name !== "AbortError") showError("Couldn't reach Plainly. Check your connection and try again.");
+  }
+}
+
+function resetResult() {
+  $("#marks").replaceChildren(); $("#favs").replaceChildren();
+  ["#pRead", "#pVerify", "#pDecide", "#meta"].forEach((s) => $(s).textContent = "");
+  $("#stamp").hidden = true; $("#stamp").className = "stamp"; $("#stampInline").hidden = true;
+  $("#scan").hidden = false; $("#answer").hidden = true; $("#err").hidden = true;
+  $("#progress").hidden = false; $("#docText").hidden = true; $("#pdfCard").hidden = true; $("#docwrap").hidden = false;
+  $("#docImg").removeAttribute("src");
+  document.querySelectorAll("#progress li").forEach((li) => li.className = "");
+  $("#result").className = "";
+}
+
+function setStage(stage, status) {
+  const li = document.querySelector(`#progress li[data-stage="${stage}"]`);
+  if (li) li.className = status === "start" ? "active" : "done";
+}
+
+function handle(e) {
+  switch (e.type) {
+    case "stage":
+      setStage(e.stage, e.status);
+      if (e.stage === "verify" && e.status === "start" && e.queries && e.queries.length)
+        $("#pVerify").textContent = "Looking up: " + e.queries.map((q) => q.query).join("; ");
+      if (e.stage === "verify" && e.status === "done")
+        $("#pVerify").textContent = e.count ? `${e.count} sources checked` : "The web check couldn't run this time.";
+      if (e.stage === "read" && e.status === "done") $("#scan").hidden = true;
+      if (e.stage === "decide" && e.status === "start") $("#pDecide").textContent = "Weighing what we found…";
+      break;
+    case "extract":
+      st.ex = e.data;
+      $("#pRead").textContent = e.data.summary || "";
+      drawMarks(e.data.regions, null);
+      break;
+    case "source":
+      st.sources.push(e.data);
+      $("#favs").append(el("span", { class: "fav" }, el("img", { src: favicon(e.data.url), alt: "", loading: "lazy" }), host(e.data.url)));
+      break;
+    case "result":
+      st.result = e.data;
+      renderResult(e.data);
+      break;
+    case "done":
+      $("#meta").textContent = `Checked in ${(e.ms / 1000).toFixed(1)} seconds.` + (e.demo ? " This is a saved demo result; add API keys to check your own documents live." : "");
+      loadTrends();
+      break;
+    case "error":
+      showError(e.message);
+      break;
+  }
+}
+
+function showError(msg) {
+  $("#scan").hidden = true;
+  document.querySelectorAll("#progress li.active").forEach((li) => li.className = "");
+  $("#errText").textContent = msg; $("#err").hidden = false;
+}
+
+function drawMarks(regions, flagOrder) {
+  const box = $("#marks"); box.replaceChildren();
+  let n = 0;
+  for (const r of regions || []) {
+    if (!r.box_2d) continue;
+    const [y0, x0, y1, x1] = r.box_2d;
+    const m = el("div", { class: `mark ${r.kind}`, "data-id": r.id, title: r.label || "" });
+    Object.assign(m.style, { top: y0 / 10 + "%", left: x0 / 10 + "%", width: (x1 - x0) / 10 + "%", height: (y1 - y0) / 10 + "%" });
+    if (r.kind === "flag") {
+      const num = flagOrder ? flagOrder.indexOf(r.id) + 1 : ++n;
+      if (num > 0) m.append(el("span", { class: "n", text: String(num) })); else m.classList.add("dim");
+    }
+    box.append(m);
+  }
+}
+
+function renderResult(r) {
+  const v = r.verdict;
+  $("#result").className = "v-" + v;
+  $("#progress").hidden = true;
+  const hasImg = !$("#docwrap").hidden;
+  const stamp = hasImg ? $("#stamp") : $("#stampInline");
+  stamp.textContent = STAMP[v]; stamp.className = `stamp ${hasImg ? "" : "inline "}${v}${STAMP[v].length > 6 ? " long" : ""} thump`; stamp.hidden = false;
+  if (hasImg) placeStamp(stamp, st.ex && st.ex.regions);
+  if (hasImg) { $("#doc").classList.remove("hit"); void $("#doc").offsetWidth; $("#doc").classList.add("hit"); }
+
+  $("#headline").textContent = r.headline;
+  const sure = $("#sure"); sure.replaceChildren();
+  const meter = el("span", { class: "meter", role: "meter", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": String(r.confidence), "aria-label": "How sure" }, el("i"));
+  meter.firstChild.style.width = r.confidence + "%";
+  sure.append(`${r.confidence}% sure`, meter);
+
+  // flags, numbered to match the marks on the image
+  const regionIds = new Set((st.ex && st.ex.regions || []).filter((x) => x.box_2d).map((x) => x.id));
+  const order = r.red_flags.map((f) => regionIds.has(f.region_id) ? f.region_id : null);
+  drawMarks(st.ex && st.ex.regions, order.filter(Boolean));
+  const flags = $("#flags"); flags.replaceChildren();
+  let k = 0;
+  r.red_flags.forEach((f, i) => {
+    const onImage = !!order[i];
+    const li = el("li", { tabindex: "0" }, el("span", { class: "num" + (onImage ? "" : " none"), text: onImage ? String(++k) : "•" }),
+      el("div", {}, el("b", { text: f.title }), el("p", { text: f.why })));
+    if (onImage) li.onclick = li.onkeydown = (ev) => { if (ev.type === "keydown" && ev.key !== "Enter") return; pulse(f.region_id); };
+    flags.append(li);
+  });
+  $("#flagsLabel").hidden = !r.red_flags.length;
+  $("#flagsLabel").textContent = v === "scam" || v === "suspicious" ? "Red flags" : "Worth a second look";
+  const goods = $("#goods"); goods.replaceChildren();
+  for (const g of r.good_signs) goods.append(el("li", {}, checkIcon(), el("div", {}, el("b", { text: g.title }), el("p", { text: g.why }))));
+  $("#goodsLabel").hidden = !r.good_signs.length;
+
+  // what does it say
+  $("#plain").textContent = r.plain_english;
+  const facts = $("#facts"); facts.replaceChildren();
+  const fact = (label, value, opts = {}) => {
+    const dd = el("dd", { class: opts.big ? "big" : "", text: value });
+    const d = el("div", { class: opts.wide ? "wide" : "" }, el("dt", { text: label }), dd);
+    if (opts.extra) d.append(opts.extra);
+    facts.append(d);
+  };
+  const scammy = v === "scam";
+  if (r.amount_due && !scammy) fact("Amount", r.amount_due, { big: true });
+  if (r.deadline && !scammy) {
+    const days = daysUntil(r.deadline);
+    const cal = el("a", { class: "cal", href: `/api/ics?title=${encodeURIComponent(r.calendar_title || r.deadline_label || "Deadline")}&day=${r.deadline}&notes=${encodeURIComponent(r.what_they_want || "")}` , text: "Add to Calendar" });
+    fact(r.deadline_label || "Deadline", fmtDate(r.deadline) + (days >= 0 ? ` (in ${days} day${days === 1 ? "" : "s"})` : " (passed)"), { extra: cal });
+  }
+  const ex = st.ex || {};
+  const from = [ex.claimed_sender, ex.sender_details].filter(Boolean).join(", ");
+  if (from) fact(scammy ? "Claims to be from" : "From", from, { wide: !(r.amount_due && r.deadline) || scammy });
+  if (r.what_they_want) fact(scammy ? "What they're after" : "What they want", r.what_they_want, { wide: true });
+  if (facts.children.length % 2 === 1 && facts.lastElementChild && !facts.lastElementChild.classList.contains("wide")) facts.lastElementChild.classList.add("wide");
+
+  // what do I do
+  const steps = $("#steps"); steps.replaceChildren();
+  for (const s of r.steps) {
+    const li = el("li", { tabindex: "0", role: "checkbox", "aria-checked": "false" }, el("div", {}, el("b", { text: s.title }), el("p", { text: s.detail })));
+    li.onclick = li.onkeydown = (ev) => {
+      if (ev.type === "keydown" && ev.key !== "Enter" && ev.key !== " ") return;
+      ev.preventDefault(); li.classList.toggle("done"); li.setAttribute("aria-checked", String(li.classList.contains("done")));
+    };
+    steps.append(li);
+  }
+  renderMessage(r);
+  renderCall(r.call_script);
+
+  // rights + sources
+  const rights = $("#rights"); rights.replaceChildren();
+  for (const x of r.rights) {
+    const kids = [el("b", { text: x.title }), el("p", { text: x.detail })];
+    if (x.source_url) kids.push(el("a", { href: x.source_url, target: "_blank", rel: "noopener", text: "Source: " + host(x.source_url) }));
+    rights.append(el("li", {}, ...kids));
+  }
+  $("#rightsSec").hidden = !r.rights.length;
+  const used = new Set(r.sources_used);
+  const srcs = [...st.sources].sort((a, b) => used.has(b.url) - used.has(a.url));
+  const ul = $("#sources"); ul.replaceChildren();
+  for (const s of srcs.slice(0, 8)) {
+    ul.append(el("li", {}, el("img", { src: favicon(s.url), alt: "", loading: "lazy" }),
+      el("div", {}, el("a", { href: s.url, target: "_blank", rel: "noopener", text: s.title || host(s.url) }),
+        el("small", { text: `${PURPOSE[s.purpose] || "Source"}, ${host(s.url)}` + (used.has(s.url) ? ", used for this answer" : "") }))));
+  }
+  $("#sourcesSec").hidden = !srcs.length;
+  $("#answer").hidden = false;
+}
+
+function renderMessage(r) {
+  const m = r.message, box = $("#msg");
+  if (!m || m.kind === "none" || !m.body) { box.hidden = true; return; }
+  box.hidden = false;
+  $("#msgTitle").textContent = m.kind === "report" ? "Report it" : "Your reply, ready to send";
+  $("#msgTo").textContent = [m.to && `To: ${m.to}`, m.subject && `Subject: ${m.subject}`].filter(Boolean).join("\n");
+  $("#msgTo").style.whiteSpace = "pre-line";
+  const body = $("#msgBody"); body.value = m.body;
+  body.style.height = "auto"; requestAnimationFrame(() => body.style.height = Math.min(520, body.scrollHeight + 4) + "px");
+  const actions = $("#msgActions"); actions.replaceChildren();
+  const copy = el("button", { class: "btn small", type: "button", text: "Copy" });
+  copy.onclick = async () => {
+    try { await navigator.clipboard.writeText(body.value); copy.textContent = "Copied"; setTimeout(() => copy.textContent = "Copy", 1500); }
+    catch { body.select(); toast("Select all and copy"); }
+  };
+  actions.append(copy);
+  const email = (m.to.match(/[\w.+-]+@[\w-]+\.[\w.]+/) || [""])[0];
+  if (m.kind === "reply") {
+    const a = el("a", { class: "btn small", text: "Email it" });
+    a.onclick = () => a.href = `mailto:${email}?subject=${encodeURIComponent(m.subject)}&body=${encodeURIComponent(body.value)}`;
+    a.href = `mailto:${email}?subject=${encodeURIComponent(m.subject)}&body=${encodeURIComponent(body.value)}`;
+    actions.append(a);
+  }
+  const site = m.to.match(/\b([\w-]+\.)+gov\b/i);
+  if (m.kind === "report" && site) actions.append(el("a", { class: "btn small", href: "https://" + site[0], target: "_blank", rel: "noopener", text: "Open " + site[0] }));
+  if (navigator.share) {
+    const sh = el("button", { class: "btn small", type: "button", text: "Share" });
+    sh.onclick = () => navigator.share({ title: m.subject || "Plainly", text: body.value }).catch(() => {});
+    actions.append(sh);
+  }
+}
+
+function placeStamp(stamp, regions) {
+  // put the stamp in whichever corner covers the fewest highlighted parts of the document
+  const styles = [{ top: "5%", bottom: "auto" }, { top: "auto", bottom: "5%" }, { top: "44%", bottom: "auto" }];
+  Object.assign(stamp.style, styles[bestSpot(regions)]);
+}
+
+function pulse(id) {
+  const m = document.querySelector(`.mark[data-id="${CSS.escape(id)}"]`);
+  if (!m) return;
+  const doc = $("#doc"), r = doc.getBoundingClientRect();
+  if (r.bottom < 60 || r.top > innerHeight - 60) doc.scrollIntoView({ behavior: "smooth", block: "center" });
+  m.classList.add("pulse"); setTimeout(() => m.classList.remove("pulse"), 1400);
+}
+
+function checkIcon() {
+  const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("aria-hidden", "true");
+  s.innerHTML = '<circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7.5 12.5l3 3 6-6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>';
+  return s;
+}
+
+
+/* ---------- read it to me */
+const ORD = ["First", "Second", "Third", "Fourth", "Fifth", "Sixth"];
+let speaking = null, voice = null;
+function pickVoice() {
+  if (!("speechSynthesis" in window)) return;
+  const vs = speechSynthesis.getVoices().filter((v) => /^en(-|_)?/i.test(v.lang));
+  const pref = [/samantha/i, /ava/i, /natural/i, /google us english/i, /aria/i, /jenny/i, /zira/i];
+  voice = null;
+  for (const re of pref) { voice = vs.find((v) => re.test(v.name) && /US/i.test(v.lang)) || vs.find((v) => re.test(v.name)); if (voice) break; }
+  voice = voice || vs.find((v) => /en-US/i.test(v.lang)) || vs[0] || null;
+}
+if ("speechSynthesis" in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+else { $("#readBtn").hidden = true; $("#callRead").hidden = true; }
+
+function setLabel(btn, text, on) { btn.querySelector("span").textContent = text; btn.setAttribute("aria-pressed", String(on)); }
+function clearReading() { document.querySelectorAll(".reading").forEach((e) => e.classList.remove("reading")); }
+function stopSpeaking() {
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  clearReading();
+  if (speaking) setLabel(speaking.btn, speaking.idle, false);
+  speaking = null;
+}
+function speak(items, btn) {
+  if (!("speechSynthesis" in window)) return;
+  const prev = speaking && speaking.btn;
+  stopSpeaking();
+  if (prev === btn) return;  // second tap = stop
+  speaking = { btn, idle: btn.querySelector("span").textContent };
+  setLabel(btn, "Stop reading", true);
+  items.filter((it) => it.text).forEach((it, i, all) => {
+    const u = new SpeechSynthesisUtterance(it.text);
+    u.rate = 0.96;
+    if (voice) { u.voice = voice; u.lang = voice.lang; } else u.lang = "en-US";
+    u.onstart = () => {
+      clearReading();
+      if (it.el) { it.el.classList.add("reading"); it.el.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+    };
+    if (i === all.length - 1) u.onend = () => { if (speaking && speaking.btn === btn) stopSpeaking(); };
+    speechSynthesis.speak(u);
+  });
+}
+$("#readBtn").onclick = () => {
+  const r = st.result; if (!r) return;
+  const items = [{ el: $("#headline"), text: r.headline }, { el: $("#plain"), text: r.plain_english }];
+  if (r.steps.length) items.push({ text: "Here's what to do." });
+  [...$("#steps").children].forEach((li, i) => {
+    const s = r.steps[i]; if (s) items.push({ el: li, text: `${ORD[i] || "Next"}, ${s.title}. ${s.detail}` });
+  });
+  speak(items, $("#readBtn"));
+};
+$("#callRead").onclick = () => {
+  const c = st.result && st.result.call_script; if (!c) return;
+  speak([...$("#callLines").children].map((li, i) => ({ el: li, text: c.lines[i] })), $("#callRead"));
+};
+
+/* ---------- phone script */
+function renderCall(c) {
+  const box = $("#call");
+  if (!c || !c.lines || !c.lines.length) { box.hidden = true; return; }
+  box.hidden = false;
+  $("#callWho").textContent = [c.who, c.when].filter(Boolean).join(", ");
+  const dial = $("#callDial");
+  if (c.number) {
+    dial.hidden = false; dial.href = "tel:" + c.number.replace(/[^\d+]/g, "");
+    dial.querySelector("span").textContent = "Call " + c.number;
+  } else dial.hidden = true;
+  const ready = $("#callReady"); ready.replaceChildren(...(c.have_ready || []).map((x) => el("li", { text: x })));
+  $("#callReadyLabel").hidden = ready.hidden = !(c.have_ready || []).length;
+  $("#callLines").replaceChildren(...c.lines.map((x) => el("li", {}, el("span", { text: x }))));
+  const push = $("#callPush"); push.replaceChildren();
+  if (c.if_they_say_no) push.append(el("b", { text: "If they say no: " }), c.if_they_say_no);
+  push.hidden = !c.if_they_say_no;
+}
+
+/* ---------- send to family */
+const VCOLOR = { scam: "#C21F4E", suspicious: "#B07A12", legit: "#2E8B62", unclear: "#5B6B8C" };
+function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
+function wrapLines(ctx, text, maxW, maxLines) {
+  const words = (text || "").split(/\s+/).filter(Boolean), lines = [];
+  let cur = "";
+  for (const w of words) {
+    const t = cur ? cur + " " + w : w;
+    if (ctx.measureText(t).width <= maxW || !cur) cur = t; else { lines.push(cur); cur = w; }
+  }
+  if (cur) lines.push(cur);
+  if (lines.length > maxLines) {
+    lines.length = maxLines;
+    let last = lines[maxLines - 1];
+    while (ctx.measureText(last + "…").width > maxW && last.includes(" ")) last = last.slice(0, last.lastIndexOf(" "));
+    lines[maxLines - 1] = last.replace(/[,.;:]$/, "") + "…";
+  }
+  return lines;
+}
+function loadImg(src) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
+const FONT = '"Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif';
+
+async function buildFamilyCard() {
+  const r = st.result, v = r.verdict, W = 1080, P = 88, IW = W - 2 * P;
+  try { await Promise.all(["400", "600", "800", "900"].map((w) => document.fonts.load(`${w} 40px "Public Sans"`))); } catch {}
+  const c = document.createElement("canvas"); c.width = W; c.height = 2400;
+  const g = c.getContext("2d");
+  g.textBaseline = "alphabetic";
+  // header
+  try { const ic = await loadImg("/static/icon-192.png"); roundRect(g, P, 84, 56, 56, 14); g.save(); g.clip(); g.drawImage(ic, P, 84, 56, 56); g.restore(); } catch {}
+  g.fillStyle = "#14213D"; g.font = `800 40px ${FONT}`; g.fillText("Plainly", P + 72, 126);
+  g.font = `500 26px ${FONT}`; g.fillStyle = "#7A849C"; g.textAlign = "right";
+  g.fillText("Checked " + new Date().toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }), W - P, 124);
+  g.textAlign = "left";
+  let y = 176;
+  // the document, with its marks and the stamp
+  const img = $("#docImg");
+  if (!$("#docwrap").hidden && img.naturalWidth) {
+    const boxH = 520;
+    g.fillStyle = "#EEF1F6"; roundRect(g, P, y, IW, boxH, 24); g.fill();
+    const sc = Math.min((IW - 40) / img.naturalWidth, (boxH - 40) / img.naturalHeight);
+    const dw = img.naturalWidth * sc, dh = img.naturalHeight * sc, dx = P + (IW - dw) / 2, dy = y + (boxH - dh) / 2;
+    g.save(); roundRect(g, dx, dy, dw, dh, 12); g.clip(); g.drawImage(img, dx, dy, dw, dh); g.restore();
+    g.strokeStyle = "#D5DBE7"; g.lineWidth = 2; roundRect(g, dx, dy, dw, dh, 12); g.stroke();
+    const regions = (st.ex && st.ex.regions || []).filter((x) => x.box_2d);
+    const order = r.red_flags.map((f) => f.region_id).filter((id) => regions.some((x) => x.id === id));
+    const flagColor = v === "scam" || v === "suspicious" ? VCOLOR.scam : "#D99A1E";
+    for (const reg of regions) {
+      const [y0, x0, y1, x1] = reg.box_2d;
+      const rx = dx + x0 / 1000 * dw, ry = dy + y0 / 1000 * dh, rw = (x1 - x0) / 1000 * dw, rh = (y1 - y0) / 1000 * dh;
+      if (reg.kind === "fact") { g.fillStyle = "rgba(255,214,51,.45)"; roundRect(g, rx, ry, rw, rh, 6); g.fill(); continue; }
+      const n = order.indexOf(reg.id) + 1; if (!n) continue;
+      g.strokeStyle = flagColor; g.lineWidth = 4; roundRect(g, rx, ry, rw, rh, 7); g.stroke();
+      g.fillStyle = flagColor; g.beginPath(); g.arc(rx, ry, 15, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#fff"; g.font = `800 17px ${FONT}`; g.textAlign = "center"; g.fillText(String(n), rx, ry + 6); g.textAlign = "left";
+    }
+    // stamp, in the same corner as on screen
+    const spot = bestSpot(regions);
+    const word = STAMP[v].toUpperCase();
+    g.font = `900 ${word.length > 6 ? 50 : 62}px ${FONT}`;
+    const tw = g.measureText(word).width, sw = tw + 48, sh = word.length > 6 ? 76 : 88;
+    const cx = dx + dw * 0.72, cy = dy + dh * [0.13, 0.86, 0.5][spot];
+    g.save(); g.translate(Math.min(cx, P + IW - sw / 2 - 10), cy); g.rotate(-10 * Math.PI / 180);
+    g.fillStyle = "rgba(255,255,255,.8)"; roundRect(g, -sw / 2, -sh / 2, sw, sh, 12); g.fill();
+    g.strokeStyle = VCOLOR[v]; g.lineWidth = 6; roundRect(g, -sw / 2, -sh / 2, sw, sh, 12); g.stroke();
+    g.lineWidth = 2.5; roundRect(g, -sw / 2 - 9, -sh / 2 - 9, sw + 18, sh + 18, 16); g.stroke();
+    g.fillStyle = VCOLOR[v]; g.textAlign = "center"; g.fillText(word, 0, sh * 0.23); g.restore(); g.textAlign = "left";
+    y += boxH + 52;
+  } else {
+    const quote = ($("#docText").textContent || $("#pdfCard").textContent || "").trim();
+    if (quote) {
+      g.font = `400 28px ${FONT}`;
+      const ql = wrapLines(g, quote.replace(/\s+/g, " "), IW - 64, 5);
+      const qh = ql.length * 40 + 48;
+      g.fillStyle = "#EEF1F6"; roundRect(g, P, y, IW, qh, 20); g.fill();
+      g.fillStyle = "#4A5672"; ql.forEach((l, i) => g.fillText(l, P + 32, y + 52 + i * 40));
+      y += qh + 52;
+    }
+  }
+  // verdict pill
+  g.font = `800 30px ${FONT}`;
+  const pill = STAMP[v], pw = g.measureText(pill).width + 44;
+  g.fillStyle = VCOLOR[v]; roundRect(g, P, y, pw, 52, 26); g.fill();
+  g.fillStyle = "#fff"; g.fillText(pill, P + 22, y + 36);
+  g.font = `600 26px ${FONT}`; g.fillStyle = "#7A849C"; g.fillText(`${r.confidence}% sure`, P + pw + 18, y + 35);
+  y += 104;
+  // headline + plain english
+  g.fillStyle = "#14213D"; g.font = `800 54px ${FONT}`;
+  for (const l of wrapLines(g, r.headline, IW, 2)) { g.fillText(l, P, y); y += 64; }
+  y += 6;
+  g.fillStyle = "#4A5672"; g.font = `400 32px ${FONT}`;
+  for (const l of wrapLines(g, r.plain_english, IW, 4)) { g.fillText(l, P, y); y += 46; }
+  // steps
+  if (r.steps.length) {
+    y += 34; g.fillStyle = "#14213D"; g.font = `800 32px ${FONT}`; g.fillText("What to do", P, y); y += 26;
+    r.steps.slice(0, 3).forEach((s, i) => {
+      y += 30;
+      g.strokeStyle = "#14213D"; g.lineWidth = 3; g.beginPath(); g.arc(P + 20, y + 16, 20, 0, Math.PI * 2); g.stroke();
+      g.fillStyle = "#14213D"; g.font = `800 22px ${FONT}`; g.textAlign = "center"; g.fillText(String(i + 1), P + 20, y + 24); g.textAlign = "left";
+      g.font = `600 31px ${FONT}`;
+      const ls = wrapLines(g, s.title, IW - 64, 2);
+      ls.forEach((l, j) => g.fillText(l, P + 62, y + 27 + j * 42));
+      y += 27 + (ls.length - 1) * 42 + 16;
+    });
+  }
+  y += 48;
+  g.fillStyle = "#7A849C"; g.font = `400 24px ${FONT}`;
+  g.fillText("Plainly checks texts, letters and bills. It isn't legal or financial advice.", P, y);
+  const contentH = y + 44;
+  // compose: page background + white card + content
+  const out = document.createElement("canvas"); out.width = W; out.height = contentH + 48;
+  const o = out.getContext("2d");
+  o.fillStyle = "#EEF1F6"; o.fillRect(0, 0, W, out.height);
+  o.fillStyle = "#FFFFFF"; roundRect(o, 40, 40, W - 80, contentH - 16, 36); o.fill();
+  o.fillStyle = VCOLOR[v]; roundRect(o, 40, 40, W - 80, 14, [36, 36, 0, 0]); o.fill();
+  o.drawImage(c, 0, 0, W, contentH, 0, 0, W, contentH);
+  return new Promise((res) => out.toBlob(res, "image/png"));
+}
+
+function familyText(r) {
+  const lines = [`I checked this with Plainly. Verdict: ${STAMP[r.verdict]} (${r.confidence}% sure).`, "", r.headline, r.plain_english];
+  if (r.steps.length) { lines.push("", "What to do:"); r.steps.slice(0, 3).forEach((s, i) => lines.push(`${i + 1}. ${s.title}`)); }
+  return lines.join("\n");
+}
+let famFile = null, famUrl = null;
+$("#familyBtn").onclick = async () => {
+  if (!st.result) return;
+  const d = $("#famSheet");
+  $("#famText").value = familyText(st.result);
+  $("#famImg").removeAttribute("src");
+  if (d.showModal) d.showModal(); else d.setAttribute("open", "");
+  try {
+    const blob = await buildFamilyCard();
+    famFile = new File([blob], "plainly-check.png", { type: "image/png" });
+    if (famUrl) URL.revokeObjectURL(famUrl);
+    famUrl = URL.createObjectURL(blob);
+    $("#famImg").src = famUrl; $("#famSave").href = famUrl;
+  } catch (e) { famFile = null; console.log("card failed", e); }
+  const canFiles = famFile && navigator.canShare && navigator.canShare({ files: [famFile] });
+  $("#famSend").hidden = !(navigator.share);
+  $("#famSend").dataset.files = canFiles ? "1" : "";
+};
+$("#famSend").onclick = async () => {
+  const text = $("#famText").value;
+  try {
+    if ($("#famSend").dataset.files) await navigator.share({ files: [famFile], text, title: "Plainly check" });
+    else await navigator.share({ text, title: "Plainly check" });
+    $("#famSheet").close(); toast("Sent");
+  } catch (e) { if (e && e.name !== "AbortError") toast("Couldn't open sharing. Save the picture instead."); }
+};
+$("#famCopy").onclick = async () => {
+  try { await navigator.clipboard.writeText($("#famText").value); toast("Note copied"); }
+  catch { $("#famText").select(); toast("Select all and copy"); }
+};
+$("#famClose").onclick = () => $("#famSheet").close();
+$("#famSheet").addEventListener("click", (e) => { if (e.target === $("#famSheet")) $("#famSheet").close(); });
+
+function bestSpot(regions) {
+  const spots = [[30, 460, 200, 980], [790, 460, 970, 980], [420, 460, 600, 980]];
+  const overlap = (a, b) => Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0])) * Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1]));
+  let best = 0, bestScore = Infinity;
+  spots.forEach((b, i) => {
+    const score = (regions || []).filter((r) => r.box_2d).reduce((t, r) => t + overlap(b, r.box_2d), 0);
+    if (score < bestScore - 1) { best = i; bestScore = score; }
+  });
+  return best;
+}
+
+loadConfig();
+loadTrends();
+setInterval(() => { if (!$("#home").hidden) loadTrends(); }, 30000);
+</script>
+</body>
+</html>

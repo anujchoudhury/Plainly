@@ -1,0 +1,13 @@
+{
+  "name": "Plainly",
+  "short_name": "Plainly",
+  "description": "Snap a text, letter or bill. Find out if it's real, what it says, and what to do.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#EEF1F6",
+  "theme_color": "#EEF1F6",
+  "icons": [
+    { "src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
