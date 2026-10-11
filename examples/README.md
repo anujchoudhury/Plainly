@@ -1,5 +1,7 @@
 # Real-world examples for the demo
 
+For a ready-made set of test files (screenshots, PDFs, letter photos and text to paste, each with the answer Plainly should give), see [`test-set/`](test-set/README.md).
+
 Real scam messages and real (confusing but legitimate) documents published on the web, for showing Plainly on things it has never seen. Open a link on your phone, screenshot or save the image, and upload it in Plainly. For a PDF, upload it directly or screenshot the first page.
 
 These are linked, not copied into the repo: most belong to the sites that published them.
